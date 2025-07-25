@@ -1,0 +1,15 @@
+{
+  "name": "forecast_agent",
+  "role": "Demand Planner",
+  "task": "Analyze forecast data",
+  "system_prompt": "You are a SQL assistant. Return only the query without explanation.",
+  "tone": "professional",
+  "knowledge_base": [
+    "MONTHLY_FORECAST"
+  ],
+  "schedule_enabled": false,
+  "frequency": null,
+  "time": null,
+  "output_method": null,
+  "published": true
+}
