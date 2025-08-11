@@ -273,7 +273,6 @@ def schedule_agent(data):
 from uuid import uuid4
 from app.models.agent import AgentConfig
 API_URL = "https://supplysenseaiapi-aadngxggarc0g6hz.z01.azurefd.net/api/iSCM/GetAgentDetails"
-
 def load_agent_config(name: str) -> AgentConfig:
     try:
         resp = requests.get(API_URL, params={"AgentName": name}, timeout=20)
@@ -303,18 +302,23 @@ def load_agent_config(name: str) -> AgentConfig:
     latest = sorted(entries, key=lambda x: x["_parsed_time"], reverse=True)[0]
     latest.pop("_parsed_time", None)
 
-    # ✅ Fix bad structure before Pydantic validation
+    # Normalize published to boolean
+    published_raw = latest.get("Published", False)
+    published = str(published_raw).lower() == "true"
+
+    # Fix bad structure before Pydantic validation
     transformed = {
-    "name": latest.get("Name"),
-    "role": latest.get("Role"),
-    "purpose": latest.get("Purpose"),
-    "instructions": _ensure_list(latest.get("Instructions")),
-    "capabilities": _ensure_list(latest.get("Capabilities")),
-    "welcome_message": latest.get("WelcomeMessage") or "",
-    "knowledge_base": _ensure_list(latest.get("KnowledgeBase")),
-    "sample_prompts": _ensure_list(latest.get("SamplePrompts")),
-    "tone": latest.get("Tone", "neutral"),  # ✅ Required field
-}
+        "name": latest.get("Name"),
+        "role": latest.get("Role"),
+        "purpose": latest.get("Purpose"),
+        "instructions": _ensure_list(latest.get("Instructions")),
+        "capabilities": _ensure_list(latest.get("Capabilities")),
+        "welcome_message": latest.get("WelcomeMessage") or "",
+        "knowledge_base": _ensure_list(latest.get("KnowledgeBase")),
+        "sample_prompts": _ensure_list(latest.get("SamplePrompts")),
+        "tone": latest.get("Tone", "neutral"),  # Required field
+        "published": published  # <-- Added here
+    }
 
     return AgentConfig(**transformed)
 
@@ -324,8 +328,6 @@ def _ensure_list(value):
     if isinstance(value, list):
         return value
     return [value]
-
-
 
 
 

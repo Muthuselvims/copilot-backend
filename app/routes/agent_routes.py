@@ -163,7 +163,7 @@ async def agent_message(request: Request):
                 }
 
             # ✅ Optionally test agent behavior
-            result = await test_agent_response(agent_config, structured_schema, sample_data)
+            #result = await test_agent_response(agent_config, structured_schema, sample_data)
 
             # ✅ Reset after success
             user_threads[user_id] = []
@@ -175,7 +175,7 @@ async def agent_message(request: Request):
             return JSONResponse(content=jsonable_encoder({
                 "message": "Agent created and validated successfully!",
                 "agent_config": agent_config,
-                "test_result": result,
+                #"test_result": result,
                 "sync_status": db_status
             }))
 
@@ -277,8 +277,23 @@ async def test_existing_agent(request: Request):
 
     return JSONResponse(result)
 
-@router.get("/agent/play/{name}")
-async def play_published_agent(name: str):
+
+
+user_threads = {}  # Make sure this is defined globally somewhere
+
+@router.post("/agent/play/{name}")
+async def play_agent(name: str, request: Request):
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse({"error": "Invalid or missing JSON body"}, status_code=400)
+
+    user_id = data.get("user_id")
+    message = data.get("message", "").strip()
+
+    if not user_id or not message:
+        return JSONResponse({"error": "Missing user_id or message"}, status_code=400)
+
     agent_config = load_agent_config(name)
     if not agent_config:
         return JSONResponse({"error": "Agent not found"}, status_code=404)
@@ -286,8 +301,33 @@ async def play_published_agent(name: str):
     if not agent_config.published:
         return JSONResponse({"error": "Agent not published"}, status_code=400)
 
-    return JSONResponse({
-        "message": f"Agent '{name}' is ready to assist!",
-        "welcome": agent_config.welcome_message,
-        "sample_prompts": agent_config.sample_prompts,
-    })
+    # Initialize thread for user if not exists
+    if user_id not in user_threads:
+        user_threads[user_id] = []
+
+    # Append user message
+    user_threads[user_id].append({"user": message})
+
+    # Prepare data for handle_agent_request
+    structured_schema, _, sample_data = get_schema_and_sample_data()
+
+    payload = {
+        "agent_config": agent_config.dict(),
+        "question": message,
+        "structured_schema": structured_schema,
+        "sample_data": sample_data,
+        "encrypted_filename": f"{user_id}_{name}_chat",
+        "created_by": user_id,
+        "formatdata": {}
+    }
+
+    result = await handle_agent_request(payload)
+
+    if "agent_response" in result:
+        user_threads[user_id].append({"agent": result["agent_response"]})
+    else:
+        user_threads[user_id].append({"agent": "Sorry, no response generated."})
+
+    return JSONResponse(result)
+
+
