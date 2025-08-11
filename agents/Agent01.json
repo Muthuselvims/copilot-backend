@@ -1,0 +1,25 @@
+{
+  "id": "303317a4-0743-4b6c-880e-dfbd4268bdd6",
+  "name": "agent01",
+  "role": "Production Planner",
+  "purpose": "Analyse material Lead time data",
+  "instructions": [
+    "Analyse material Lead time data"
+  ],
+  "capabilities": [
+    "Analyse material Lead time data"
+  ],
+  "welcome_message": "hi",
+  "tone": "friendly",
+  "knowledge_base": [],
+  "sample_prompts": [
+    "What are my insights for production planner?",
+    "Generate a ppt for production planner",
+    "Summarize key metrics for production planner"
+  ],
+  "schedule_enabled": true,
+  "frequency": "once",
+  "time": "09:00",
+  "output_method": "chat",
+  "published": false
+}

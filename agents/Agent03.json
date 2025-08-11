@@ -1,0 +1,24 @@
+{
+  "name": "Agent03",
+  "role": "Production Planner",
+  "purpose": "Summarize fill rate data of materials",
+  "instructions": [
+    "Display fill rate percentange of materials"
+  ],
+  "capabilities": [
+    "Recommend Actions"
+  ],
+  "welcome_message": "Hi there",
+  "tone": "friendly",
+  "knowledge_base": [],
+  "sample_prompts": [
+    "What are my insights for production planner?",
+    "Generate a ppt for production planner",
+    "Summarize key metrics for production planner"
+  ],
+  "schedule_enabled": true,
+  "frequency": "once",
+  "time": "09:00",
+  "output_method": "chat",
+  "published": false
+}

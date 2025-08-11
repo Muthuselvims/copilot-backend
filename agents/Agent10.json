@@ -1,0 +1,25 @@
+{
+  "id": "5912810b-e025-4196-b636-79e1167feec6",
+  "name": "Agent10",
+  "role": "Production Planner",
+  "purpose": "Analyse leadtime data of Materials",
+  "instructions": [
+    "Analyse leadtime data of Materials"
+  ],
+  "capabilities": [
+    "Analyse leadtime data of Materials"
+  ],
+  "welcome_message": "Hi",
+  "tone": "friendly",
+  "knowledge_base": [],
+  "sample_prompts": [
+    "What are my insights for production planner?",
+    "Generate a ppt for production planner",
+    "Summarize key metrics for production planner"
+  ],
+  "schedule_enabled": true,
+  "frequency": "once",
+  "time": "09:00",
+  "output_method": "chat",
+  "published": false
+}

@@ -1,0 +1,25 @@
+{
+  "id": "b7253041-cbe6-4c34-8a70-7e55f4cd5381",
+  "name": "Agent 10",
+  "role": "Production Planner",
+  "purpose": "Query consumption data of materials",
+  "instructions": [
+    "Calculate reorder date of materials based on demand"
+  ],
+  "capabilities": [
+    "Calculate reorder date of materials based on demand"
+  ],
+  "welcome_message": "hi",
+  "tone": "friendly",
+  "knowledge_base": [],
+  "sample_prompts": [
+    "What are my insights for production planner?",
+    "Generate a ppt for production planner",
+    "Summarize key metrics for production planner"
+  ],
+  "schedule_enabled": true,
+  "frequency": "once",
+  "time": "09:00",
+  "output_method": "chat",
+  "published": false
+}

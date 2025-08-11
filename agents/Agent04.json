@@ -1,0 +1,25 @@
+{
+  "name": "Agent04",
+  "role": "Production Planner",
+  "purpose": "Summarize orders data of Materials",
+  "instructions": [
+    "Summarize top 20 materials"
+  ],
+  "capabilities": [
+    "Generate PPT",
+    "Recommend Actions"
+  ],
+  "welcome_message": "Hi..",
+  "tone": "friendly",
+  "knowledge_base": [],
+  "sample_prompts": [
+    "What are my insights for updated order data summary?",
+    "Generate a ppt for updated order data summary",
+    "Summarize key metrics for updated order data summary"
+  ],
+  "schedule_enabled": true,
+  "frequency": "once",
+  "time": "09:00",
+  "output_method": "chat",
+  "published": true
+}

@@ -1,7 +1,12 @@
 from pydantic import BaseModel
 from typing import List, Optional
 
+
+from uuid import uuid4
+from pydantic import Field
+
 class AgentConfig(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid4()))
     name: str
     role: str
     purpose: str

@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: copilot-backend
+    env: docker
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: AUTOGEN_USE_DOCKER
+        value: "False"
+      - key: SERVER
+        sync: false
+      - key: DATABASE
+        sync: false
+      - key: UID
+        sync: false
+      - key: PWD
+        sync: false
+
+

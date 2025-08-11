@@ -1,0 +1,25 @@
+{
+  "id": "49d6e7c4-61d5-4323-9c5c-c15dc913c489",
+  "name": "Agent2",
+  "role": "Production Planner",
+  "purpose": "Analyse consumption data of Materials",
+  "instructions": [
+    "Analyse consumption data of Materials"
+  ],
+  "capabilities": [
+    "Analyse consumption data of Materials"
+  ],
+  "welcome_message": "Hi",
+  "tone": "friendly",
+  "knowledge_base": [],
+  "sample_prompts": [
+    "What are my insights for production planner?",
+    "Generate a ppt for production planner",
+    "Summarize key metrics for production planner"
+  ],
+  "schedule_enabled": true,
+  "frequency": "once",
+  "time": "09:00",
+  "output_method": "chat",
+  "published": false
+}

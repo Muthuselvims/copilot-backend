@@ -1,0 +1,25 @@
+{
+  "id": "f098d657-3387-468b-abd5-0bd42c24d731",
+  "name": "Agent09",
+  "role": "Production Planner",
+  "purpose": "Analyse Inventory data",
+  "instructions": [
+    "Analyze Inventory data of Materials"
+  ],
+  "capabilities": [
+    "recommend actions"
+  ],
+  "welcome_message": "Hi",
+  "tone": "friendly",
+  "knowledge_base": [],
+  "sample_prompts": [
+    "What are my insights for production planner?",
+    "Generate a ppt for production planner",
+    "Summarize key metrics for production planner"
+  ],
+  "schedule_enabled": true,
+  "frequency": "once",
+  "time": "09:00",
+  "output_method": "chat",
+  "published": false
+}

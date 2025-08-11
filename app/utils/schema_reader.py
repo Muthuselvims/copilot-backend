@@ -18,6 +18,7 @@ def get_schema_and_sample_data():
     cursor.execute("""
         SELECT TABLE_NAME, COLUMN_NAME
         FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA NOT IN ('INFORMATION_SCHEMA', 'sys')
         ORDER BY TABLE_NAME, ORDINAL_POSITION
     """)
     rows = cursor.fetchall()
@@ -58,6 +59,7 @@ def get_db_schema():
     cursor.execute("""
         SELECT TABLE_NAME, COLUMN_NAME
         FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA NOT IN ('INFORMATION_SCHEMA', 'sys')
         ORDER BY TABLE_NAME, ORDINAL_POSITION
     """)
     rows = cursor.fetchall()

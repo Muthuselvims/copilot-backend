@@ -1,0 +1,25 @@
+{
+  "id": "69fc0693-02bf-4f45-8a7e-e7758073f668",
+  "name": "Agent07",
+  "role": "Production Planner",
+  "purpose": "Analyse fill rate data of Materials",
+  "instructions": [
+    "Analyse fill rate data of Materials"
+  ],
+  "capabilities": [
+    "Analyse fill rate data of Materials"
+  ],
+  "welcome_message": "Hi",
+  "tone": "friendly",
+  "knowledge_base": [],
+  "sample_prompts": [
+    "What are my insights for production planner?",
+    "Generate a ppt for production planner",
+    "Summarize key metrics for production planner"
+  ],
+  "schedule_enabled": true,
+  "frequency": "once",
+  "time": "09:00",
+  "output_method": "chat",
+  "published": false
+}

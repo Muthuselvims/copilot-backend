@@ -1,0 +1,25 @@
+{
+  "id": "49cd18c8-1b1d-4f48-b28b-cc61907af432",
+  "name": "Agent05",
+  "role": "Supply Chain Planner",
+  "purpose": "Query consumption data of Materials",
+  "instructions": [
+    "Aggregate consumption data of Materials"
+  ],
+  "capabilities": [
+    "Recommend Actions"
+  ],
+  "welcome_message": "Hi",
+  "tone": "friendly",
+  "knowledge_base": [],
+  "sample_prompts": [
+    "What are my insights for supply chain planner?",
+    "Generate a ppt for supply chain planner",
+    "Summarize key metrics for supply chain planner"
+  ],
+  "schedule_enabled": true,
+  "frequency": "once",
+  "time": "09:00",
+  "output_method": "chat",
+  "published": false
+}

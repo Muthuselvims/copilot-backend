@@ -1,0 +1,25 @@
+{
+  "id": "12bfc9b5-2c53-4299-8777-f16730ac9050",
+  "name": "Agent",
+  "role": "Production Planner",
+  "purpose": "Analyse Inventory Data for material forecast",
+  "instructions": [
+    "Analyse Inventory Data for material forecast"
+  ],
+  "capabilities": [
+    "Analyse Inventory Data for material forecast"
+  ],
+  "welcome_message": "hi",
+  "tone": "friendly",
+  "knowledge_base": [],
+  "sample_prompts": [
+    "What are my insights for production planner?",
+    "Generate a ppt for production planner",
+    "Summarize key metrics for production planner"
+  ],
+  "schedule_enabled": true,
+  "frequency": "once",
+  "time": "09:00",
+  "output_method": "chat",
+  "published": false
+}

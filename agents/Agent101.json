@@ -1,0 +1,25 @@
+{
+  "id": "80937114-74ad-479d-bb79-943d45d8e20c",
+  "name": "Agent101",
+  "role": "Supply Chain Planner",
+  "purpose": "Analyse Leadtime data",
+  "instructions": [
+    "Analyse Leadtime data"
+  ],
+  "capabilities": [
+    "Analyse Leadtime data"
+  ],
+  "welcome_message": "Hi",
+  "tone": "friendly",
+  "knowledge_base": [],
+  "sample_prompts": [
+    "What are my insights for supply chain planner?",
+    "Generate a ppt for supply chain planner",
+    "Summarize key metrics for supply chain planner"
+  ],
+  "schedule_enabled": true,
+  "frequency": "once",
+  "time": "09:00",
+  "output_method": "chat",
+  "published": false
+}
