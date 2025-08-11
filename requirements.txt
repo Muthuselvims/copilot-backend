@@ -6,3 +6,8 @@ pyodbc
 python-dotenv
 fastapi-utils
 fastapi-pagination
+openai
+requests
+pydantic
+numpy
+python-docx
