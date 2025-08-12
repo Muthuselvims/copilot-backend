@@ -349,3 +349,25 @@ async def play_agent(name: str, request: Request):
     return JSONResponse(result)
 
 
+@router.post("/reset-conversation")
+async def reset_conversation(request: Request):
+    try:
+        data = await request.json()
+        user_id = data.get("user_id")
+
+        if not user_id:
+            return JSONResponse({"error": "Missing user_id"}, status_code=400)
+
+        # Reset the user's conversation state
+        if user_id in user_threads:
+            del user_threads[user_id]
+        if user_id in user_collected_fields:
+            del user_collected_fields[user_id]
+            
+        return JSONResponse({"message": "Conversation has been reset."}, status_code=200)
+
+    except Exception as e:
+        traceback.print_exc()
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
