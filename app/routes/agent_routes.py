@@ -42,6 +42,8 @@ async def agent_message(request: Request):
                 "role": None,
                 "purpose": None,
                 "instructions": None,
+                "capabilities": None,
+                "welcome_message": None,
             }
 
         thread = user_threads[user_id]
@@ -54,26 +56,43 @@ async def agent_message(request: Request):
             return JSONResponse({"message": "What is the agent's role?"})
 
         elif not collected["role"]:
-            collected["role"] = message
-
-            if collected["role"] not in VALID_ROLES:
-                user_threads[user_id] = []
-                user_collected_fields[user_id] = {}
+            if message not in VALID_ROLES:
                 return JSONResponse({
-                    "error": f"Invalid role: '{collected['role']}'",
+                    "error": f"Invalid role: '{message}'. Please provide a valid role from the following options: {', '.join(VALID_ROLES)}",
                     "allowed_roles": VALID_ROLES
                 }, status_code=400)
-
+            
+            collected["role"] = message
             return JSONResponse({"message": "What is the purpose of this agent?"})
 
+        # === PURPOSE VALIDATION MOVED HERE ===
         elif not collected["purpose"]:
+            # Perform validation immediately after getting the purpose
+            # Note: The validation function often requires instructions as well.
+            # Here, we'll assume a simplified validation that only checks the purpose field.
+            # You will need to adjust your `validate_purpose_and_instructions` function.
+            
+            # Placeholder for purpose-only validation
+            structured_schema, _, sample_data = get_schema_and_sample_data()
+            validation = validate_purpose_and_instructions(
+                message, "", structured_schema, sample_data
+            )
+            
+            if not validation.get("purpose_valid", False):
+                # Only reset the purpose field, so the user can re-enter it.
+                collected["purpose"] = None
+                return JSONResponse({
+                    "error": "Invalid purpose. Must relate to querying, analyzing, summarizing, or reporting on data. Please provide a new purpose.",
+                }, status_code=400)
+
+            # If validation passes, save the purpose and ask for the next field.
             collected["purpose"] = message
             return JSONResponse({"message": "What are the detailed instructions for the agent?"})
 
         elif not collected["instructions"]:
             collected["instructions"] = message
             return JSONResponse({"message": "List the agent's capabilities (comma-separated)."})
-
+        
         elif not collected.get("capabilities"):
             collected["capabilities"] = [cap.strip() for cap in message.split(",")]
             return JSONResponse({"message": "What welcome message should the agent greet users with?"})
@@ -81,26 +100,25 @@ async def agent_message(request: Request):
         elif not collected.get("welcome_message"):
             collected["welcome_message"] = message
 
-            # ✅ Validate using LLM
+            # === INSTRUCTION VALIDATION IS MOVED TO A SEPARATE BLOCK ===
+            # Perform instruction validation and final agent creation here.
             structured_schema, _, sample_data = get_schema_and_sample_data()
             validation = validate_purpose_and_instructions(
                 collected["purpose"], collected["instructions"], structured_schema, sample_data
             )
 
-            if not validation.get("purpose_valid", False):
-                user_threads[user_id] = []
-                user_collected_fields[user_id] = {}
-                return JSONResponse({
-                    "error": "Invalid purpose. Must relate to querying, analyzing, summarizing, or reporting on data."
-                }, status_code=400)
-
             if validation.get("invalid_instructions"):
-                user_threads[user_id] = []
-                user_collected_fields[user_id] = {}
+                # Clear invalid instructions and dependents.
+                collected["instructions"] = None
+                collected["capabilities"] = None
+                collected["welcome_message"] = None
                 return JSONResponse({
-                    "error": "Invalid instructions.",
+                    "error": "Invalid instructions. Please provide new instructions.",
                     "invalid_instructions": validation["invalid_instructions"]
                 }, status_code=400)
+
+            
+            
 
             # ✅ Final config
             agent_config = {
