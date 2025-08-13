@@ -15,7 +15,19 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
-# Register router
+# This is the correct placement for non-prefixed routes
+# They are added directly to the main app instance
+@app.get("/")
+async def read_root():
+    return {"message": "Welcome to my API! 🎉"}
+
+# Add an additional, optional endpoint to check the service status
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
+
+
+# Register router AFTER the app-level routes
+# The prefix is applied here, so all routes in 'router'
+# will be available at /api/...
 app.include_router(router, prefix="/api")
-
-
