@@ -20,6 +20,15 @@ from app.services.agent_servies import (
 from app.services.agent_servies import handle_agent_request
 router = APIRouter()
 
+@router.get("/")
+async def read_root():
+    return {"message": "Welcome to my API! 🎉"}
+
+# Add an additional, optional endpoint to check the service status
+@router.get("/health")
+async def health_check():
+    return {"status": "ok"}
+
 # In-memory session tracking (temporary store for demo purposes)
 user_threads = {}
 user_collected_fields = {}
