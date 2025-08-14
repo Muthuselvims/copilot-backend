@@ -201,8 +201,7 @@ async def agent_message(request: Request):
         traceback.print_exc()
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
-
-@router.post("/agent/edit")
+@router.post("/agent-edit")
 async def edit_agent(request: Request):
     try:
         data = await request.json()
@@ -213,7 +212,9 @@ async def edit_agent(request: Request):
         new_data = {
             "name": data.get("NewAgentName"),
             "role": data.get("NewRole"),
-            "purpose": data.get("NewPurpose")
+            "purpose": data.get("NewPurpose"),
+            "instruction" : data.get("Instruction"),
+            "capabilites" : data.get("Capabilities")
         }
 
         if not existing_name or not all(new_data.values()):
@@ -222,11 +223,12 @@ async def edit_agent(request: Request):
                 status_code=400
             )
 
-        # Now call your edit_agent_config with 2 arguments
+        # Call your DB update function
         result = edit_agent_config(existing_name, new_data)
 
-        if isinstance(result, dict) and result.get("error"):
-            return JSONResponse(content=result, status_code=500)
+        # If the result is not already a dict, wrap it in one
+        if not isinstance(result, dict):
+            result = {"message": str(result)}
 
         return JSONResponse(content={
             "message": "✅ Agent updated successfully via API",
@@ -238,9 +240,8 @@ async def edit_agent(request: Request):
             "message": "❌ Exception occurred while editing agent.",
             "details": str(e)
         }, status_code=500)
-
-
-@router.post("/agent/publish")
+    
+@router.post("/agent-publish")
 async def publish_existing_agent(request: Request):
     try:
         data = await request.json()
@@ -258,7 +259,7 @@ async def publish_existing_agent(request: Request):
             status_code=500
         )
 
-@router.post("/agent/test")
+@router.post("/agent-test")
 async def test_existing_agent(request: Request):
     data = await request.json()
     name = data.get("name")

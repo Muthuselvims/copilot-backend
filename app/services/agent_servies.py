@@ -216,7 +216,11 @@ def publish_agent (agent_name):
             "NewRole": original_agent.get("Role", ""),
             "ExistingPurpose": original_agent.get("Purpose", ""),
             "NewPurpose": original_agent.get("Purpose", ""),
-            "Published": "True"  # ✅ Set Published to True
+            "Published": "True",
+            "ExistingInstruction" : original_agent.get("Instruction", ""),
+             "Instruction" : original_agent.get("Instruction",""),
+             "Existingcapabilities" : original_agent.get("Capabilities", ""),
+             "Capabilities" : original_agent.get("Capabilities","")   # ✅ Set Published to True
         }
 
         # ✅ Log payload
@@ -340,7 +344,8 @@ def edit_agent_config(existing_name, new_data):
         new_name = new_data.get("name")
         new_role = new_data.get("role")
         new_purpose = new_data.get("purpose")
-
+        new_instruction = new_data.get("instruction")
+        new_capabilities = new_data.get("capabilities")
         if not existing_name:
             return {"error": "Missing 'ExistingAgentName'"}
 
@@ -372,7 +377,11 @@ def edit_agent_config(existing_name, new_data):
             "NewRole": new_role or original_agent.get("Role", ""),
             "ExistingPurpose": original_agent.get("Purpose", ""),
             "NewPurpose": new_purpose or original_agent.get("Purpose", ""),
-            "Published": original_agent.get("Published", "False")  # Keep existing published state
+            "Published": original_agent.get("Published", "False"),
+             "ExistingInstruction": original_agent.get("Instructions", ""),
+            "Instruction": new_instruction or original_agent.get("Instructions", ""),
+            "Existingcapabilities":  original_agent.get("Capabilities", ""),
+            "Capabilities": new_capabilities or original_agent.get("Capabilities", "")    # Keep existing published state
         }
 
         # ✅ Log what we are sending
