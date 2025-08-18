@@ -55,7 +55,10 @@ async def agent_message(request: Request):
         # Collect agent data step-by-step
         if not collected["name"]:
             collected["name"] = message
-            return JSONResponse({"message": "What is the agent's role?"})
+            return JSONResponse({
+             "message": "Choose role",
+            "Roles": VALID_ROLES
+         })
 
         elif not collected["role"]:
             if message not in VALID_ROLES:

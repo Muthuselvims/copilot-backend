@@ -15,7 +15,7 @@ async def guide_agent_creation_conversation():
     while True:
         role = await ask_user("What is the role of your f"'{agent_name}'"? (e.g., Inventory Planner, Forecasting Analyst)", conversation)
         if role not in VALID_ROLES:
-            conversation.append({"role": "assistant", "content": f"'{role}' is not a valid role. Please choose from: {', '.join(VALID_ROLES)}"})
+            conversation.append({"role": "assistant", "content": f"'{role}' is not a valid role. Please choose from: [', '.join(VALID_ROLES)]"})
         else:
             break
 
@@ -55,7 +55,7 @@ async def ask_user(prompt, conversation_history):
     return response
 
 
-VALID_CAPABILITIES = {
+VALID_CAPABILITIES = [
     "Summarize results",
     "Generate output as PPT",
     "Generate Excel output",
@@ -64,7 +64,7 @@ VALID_CAPABILITIES = {
     "Forecast metrics",
     "Recommend actions",
     "Explain trends"
-}
+]
 
 def validate_capabilities(capabilities: list[str]) -> list[str]:
     """
