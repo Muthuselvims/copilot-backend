@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from app.utils.schema_reader import get_schema_and_sample_data, get_db_schema
 from app.utils.llm_validator import validate_purpose_and_instructions
 from app.utils.agent_builder import VALID_ROLES, generate_sample_prompts
-from app.services.agent_servies import save_agent_config
+from app.services.agent_servies import save_agent_config, ALLOWED_CAPABILITIES
 from app.services.agent_servies import test_agent_response
 from app.models.agent import AgentConfig
 from app.utils.gpt_utils import serialize
@@ -31,7 +31,7 @@ async def agent_message(request: Request):
     try:
         data = await request.json()
         user_id = data.get("user_id")
-        message = data.get("message", "").strip()
+        message = data.get("message", "")
 
         if not user_id or not message:
             return JSONResponse({"error": "Missing user_id or message"}, status_code=400)
@@ -98,25 +98,64 @@ async def agent_message(request: Request):
             collected["purpose"] = message
             return JSONResponse({"message": "What are the detailed instructions for the agent?"})
 
+        # ✅ 4. Get Agent Instructions
         elif not collected["instructions"]:
             collected["instructions"] = message
-            return JSONResponse({"message": "List the agent's capabilities (comma-separated)."})
-        
+            return JSONResponse({
+        "message": "List the agent's capabilities (comma-separated).",
+        "allowed_capabilities": ALLOWED_CAPABILITIES
+    })
+            
+        #elif not collected.get("capabilities"):
+            #collected["capabilities"] = [cap.strip() for cap in message.split(",")]
+            #return JSONResponse({"message": "What welcome message should the agent greet users with?"})
+
+        # ✅ 5. Get Agent Capabilities
+   # ✅ 5. Get Agent Capabilities
         elif not collected.get("capabilities"):
-            collected["capabilities"] = [cap.strip() for cap in message.split(",")]
+    
+    # Check if the message is a string
+    # 👇 NEW/CHANGED LINE
+            if isinstance(message, str):
+        # Process the string as a comma-separated list
+        # 👇 NEW/CHANGED LINE
+                user_capabilities = [cap.strip() for cap in message.split(",")]
+    
+    # Check if the message is already a list (from Postman)
+    # 👇 NEW/CHANGED LINE
+            elif isinstance(message, list):
+        # Use the list directly and strip any whitespace from each item
+        # 👇 NEW/CHANGED LINE
+                    user_capabilities = [cap.strip() for cap in message]
+    
+    # Handle other unexpected data types
+    # 👇 NEW/CHANGED LINE
+            else:
+                return JSONResponse({"error": "Invalid data type for capabilities."}, status_code=400)
+    
+    # Check if every user-provided capability is in the allowed list
+            for capability in user_capabilities:
+                    if capability not in ALLOWED_CAPABILITIES:
+                        return JSONResponse({
+                "error": f"Invalid capability: '{capability}'. Please provide a valid capability from the following options: {', '.join(ALLOWED_CAPABILITIES)}",
+                "allowed_capabilities": ALLOWED_CAPABILITIES
+            }, status_code=400)
+    
+    # If all capabilities are valid, assign them and proceed
+            collected["capabilities"] = user_capabilities
             return JSONResponse({"message": "What welcome message should the agent greet users with?"})
 
+# ✅ Welcome Message Validation
         elif not collected.get("welcome_message"):
-            collected["welcome_message"] = message
+             collected["welcome_message"] = message
 
-            # === INSTRUCTION VALIDATION IS MOVED TO A SEPARATE BLOCK ===
-            # Perform instruction validation and final agent creation here.
-            structured_schema, _, sample_data = get_schema_and_sample_data()
-            validation = validate_purpose_and_instructions(
-                collected["purpose"], collected["instructions"], structured_schema, sample_data
+          
+        structured_schema, _, sample_data = get_schema_and_sample_data()
+        validation = validate_purpose_and_instructions(
+        collected["purpose"], collected["instructions"], structured_schema, sample_data
             )
 
-            if validation.get("invalid_instructions"):
+        if validation.get("invalid_instructions"):
                 # Clear invalid instructions and dependents.
                 collected["instructions"] = None
                 collected["capabilities"] = None
@@ -130,7 +169,7 @@ async def agent_message(request: Request):
             
 
             # ✅ Final config
-            agent_config = {
+        agent_config = {
                 "name": collected["name"],
                 "role": collected["role"],
                 "purpose": collected["purpose"],
@@ -148,11 +187,11 @@ async def agent_message(request: Request):
                 "published": False
             }
 
-            agent_model = AgentConfig(**agent_config)
-            save_agent_config(agent_model)
+        agent_model = AgentConfig(**agent_config)
+        save_agent_config(agent_model)
 
             # ✅ Sync to external API
-            try:
+        try:
                 api_url = "https://supplysenseaiapi-aadngxggarc0g6hz.z01.azurefd.net/api/iSCM/SaveAgentDetails"
                 payload = {
                     "Name": agent_model.name,
@@ -183,7 +222,7 @@ async def agent_message(request: Request):
                     "body": api_body
                 }
 
-            except Exception as e:
+        except Exception as e:
                 db_status = {
                     "code": "error",
                     "body": f"❌ API call failed: {str(e)}"
@@ -193,13 +232,13 @@ async def agent_message(request: Request):
             #result = await test_agent_response(agent_config, structured_schema, sample_data)
 
             # ✅ Reset after success
-            user_threads[user_id] = []
-            user_collected_fields[user_id] = {}
+        user_threads[user_id] = []
+        user_collected_fields[user_id] = {}
 
-            print("API Status Code:", api_response.status_code)
-            print("API Response:", api_response.text)
+        print("API Status Code:", api_response.status_code)
+        print("API Response:", api_response.text)
 
-            return JSONResponse(content=jsonable_encoder({
+        return JSONResponse(content=jsonable_encoder({
                 "message": "Agent created and validated successfully!",
                 "agent_config": agent_config,
                 #"test_result": result,
