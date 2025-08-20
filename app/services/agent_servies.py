@@ -30,31 +30,20 @@ ALLOWED_CAPABILITIES = [
     "Support decision-making", "Charts and graphs", "Data validation", "Data visualization"
 ]
 # ✅ Ensure any value is returned as a list
-def _ensure_list(value):
-    if value is None:
-        return []
-    if isinstance(value, str):
-        # Try to parse JSON string
-        try:
-            parsed = json.loads(value)
-            if isinstance(parsed, list):
-                # Handles cases where a list is passed as a JSON string
-                return parsed
-        except (json.JSONDecodeError, TypeError):
-            # If not a valid JSON list, treat as a comma-separated string
-            # FIX: Split the string by commas and strip whitespace from each item
-            return [item.strip() for item in value.split(',')]
-    if isinstance(value, list):
-        # This handles cases where the value is already a list, but might
-        # still contain comma-separated strings inside
-        fixed_list = []
-        for item in value:
-            if isinstance(item, str) and ',' in item:
-                fixed_list.extend([sub_item.strip() for sub_item in item.split(',')])
-            else:
-                fixed_list.append(item)
-        return fixed_list
-    return [value]
+def _ensure_list(data):
+    """
+    Ensures the input is a list of clean, stripped strings.
+    """
+    if isinstance(data, list):
+        # If it's a list with one item that's a comma-separated string, split it.
+        if len(data) == 1 and isinstance(data[0], str) and ',' in data[0]:
+            return [item.strip() for item in data[0].split(',')]
+        # Otherwise, assume it's a clean list and strip each item.
+        return [item.strip() for item in data if isinstance(item, str)]
+    elif isinstance(data, str):
+        # If it's a string, split by comma.
+        return [item.strip() for item in data.split(',')]
+    return [] # Return an empty list for invalid input.
 
 def is_question_supported_by_capabilities(question: str, capabilities: list) -> bool:
     capability_keywords = {
@@ -449,9 +438,12 @@ def edit_agent_config(existing_name, new_data):
         existing_instruction = _ensure_list(original_agent.get("Instructions", ""))
         existing_capabilities = _ensure_list(original_agent.get("Capabilities", ""))
 
+        
         # Step 4: Normalize new instruction/capabilities
-        new_instruction = _ensure_list(new_instruction)
-        new_capabilities = _ensure_list(new_capabilities)
+        #new_instruction = _ensure_list(new_instruction)
+        #new_capabilities = _ensure_list(new_capabilities)
+        new_instruction_list = _ensure_list(new_data.get("Instruction"))
+        new_capabilities_list = _ensure_list(new_data.get("Capabilities"))
 
         # Step 5: Build Payload
         payload = {
@@ -462,15 +454,10 @@ def edit_agent_config(existing_name, new_data):
     "ExistingPurpose": original_agent.get("Purpose", ""),
     "NewPurpose": new_purpose or original_agent.get("Purpose", ""),
     "Published": original_agent.get("Published", "False"),
-
-      # Instruction
-    "ExistingInstruction": list_to_str(existing_instruction),
-    "Instruction": list_to_str(new_instruction) or list_to_str(existing_instruction),
-
-    # Capabilities
-    "Existingcapabilities": list_to_str(existing_capabilities),
-        "Capabilities": list_to_str(new_capabilities) or list_to_str(existing_capabilities)
-
+    "ExistingInstruction": list_to_str(new_data.get("ExistingInstruction") or original_agent.get("Instructions")),
+            "Instruction": list_to_str(new_data.get("Instruction") or original_agent.get("Instructions")),
+            "Existingcapabilities": list_to_str(new_data.get("Existingcapabilities") or original_agent.get("Capabilities")),
+            "Capabilities": list_to_str(new_data.get("Capabilities") or original_agent.get("Capabilities"))
 }
 
 
