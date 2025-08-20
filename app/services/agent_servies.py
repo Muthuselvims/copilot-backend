@@ -8,7 +8,7 @@ from datetime import datetime
 from collections import defaultdict
 
 from app.db.sql_connection import execute_sql_query
-from app.utils.ppt_generator import generate_ppt, generate_excel, generate_word, generate_insights
+from app.utils.ppt_generator import generate_ppt, generate_excel, generate_word, generate_insights, generate_direct_response
 from app.utils.schema_reader import get_schema_and_sample_data, get_db_schema
 from app.utils.agent_builder import validate_agent_role, generate_sample_prompts, VALID_ROLES
 from app.utils.gpt_utils import generate_sql_query
@@ -29,6 +29,68 @@ ALLOWED_CAPABILITIES = [
     "Assist with data analysis", "Create data-driven insights", "Automate repetitive tasks",
     "Support decision-making", "Charts and graphs", "Data validation", "Data visualization"
 ]
+# ✅ Ensure any value is returned as a list
+def _ensure_list(value):
+    if value is None:
+        return []
+    if isinstance(value, str):
+        # Try to parse JSON string
+        try:
+            parsed = json.loads(value)
+            if isinstance(parsed, list):
+                # Handles cases where a list is passed as a JSON string
+                return parsed
+        except (json.JSONDecodeError, TypeError):
+            # If not a valid JSON list, treat as a comma-separated string
+            # FIX: Split the string by commas and strip whitespace from each item
+            return [item.strip() for item in value.split(',')]
+    if isinstance(value, list):
+        # This handles cases where the value is already a list, but might
+        # still contain comma-separated strings inside
+        fixed_list = []
+        for item in value:
+            if isinstance(item, str) and ',' in item:
+                fixed_list.extend([sub_item.strip() for sub_item in item.split(',')])
+            else:
+                fixed_list.append(item)
+        return fixed_list
+    return [value]
+
+def is_question_supported_by_capabilities(question: str, capabilities: list) -> bool:
+    capability_keywords = {
+        "ppt": "Generate output as PPT",
+        "pptx": "Generate output as PPT",
+        "presentation": "Generate output as PPT",
+        "excel": "Generate output as Excel",
+        "xlsx": "Generate output as Excel",
+        "word": "Generate output as Word",
+        "doc": "Generate output as Word",
+        "docx": "Generate output as Word",
+        "chart": "Charts and graphs",
+        "graph": "Charts and graphs",
+        "visual": "Data visualization",
+        "recommend": "Provide data-driven recommendations",
+        "summarize": "Summarize results",
+        "insight": "Create data-driven insights",
+        "anomaly": "Highlight anomalies",
+        "validate": "Data validation",
+        "automate": "Automate repetitive tasks",
+        "assist": "Assist with data analysis",
+        "support": "Support decision-making",
+        "visualize": "Data visualization",
+        "data-driven": "Provide data-driven recommendations",
+
+        "data analysis": "Assist with data analysis",
+        "data insights": "Create data-driven insights"
+    }
+
+    for keyword, required_capability in capability_keywords.items():
+        if keyword in question.lower():
+            if required_capability not in capabilities:
+                return False
+    return True
+
+    
 
 
 def detect_output_format(question: str) -> str:
@@ -40,6 +102,7 @@ def detect_output_format(question: str) -> str:
     elif any(x in q for x in ["word", "doc", "docx"]):
         return "word"
     return "none"
+    
 
 
 def save_agent_config(agent_config: AgentConfig):
@@ -68,6 +131,13 @@ async def handle_agent_request(data : dict):
     if not agent_config:
         return {"error": f"❌ Agent '{agent_name}' not found"}
 
+    # ✅ Capability enforcement
+    if not is_question_supported_by_capabilities(question, agent_config.capabilities):
+     return {
+        "error": f"❌ This question requires capabilities not available in agent '{agent_name}'.",
+        "allowed_capabilities": agent_config.capabilities
+    }
+
     
     # GPT-based semantic check
     is_relevant = await is_question_relevant_to_purpose(question, agent_config.purpose)
@@ -94,14 +164,19 @@ async def handle_agent_request(data : dict):
 
     # ✅ Detect output format
     output_format = detect_output_format(question)
+
+        # ✅ Detect if visualization is requested
+    visual_keywords = ["chart", "graph", "visual", "visualize"]
+    include_charts = any(k in question.lower() for k in visual_keywords)
+
     output_path = None
 
     if output_format == "ppt":
-        output_path = generate_ppt(question, result_cleaned)
+        output_path = generate_ppt(question, result_cleaned,  include_charts=include_charts)
     elif output_format == "excel":
-        output_path = generate_excel(result_cleaned, question)
+        output_path = generate_excel(result_cleaned, question,  include_charts=include_charts)
     elif output_format == "word":
-        output_path = generate_word(result_cleaned, question)
+        output_path = generate_word(result_cleaned, question,  include_charts=include_charts)
     
     # ✅ Upload PPT/Excel/Word to external API
     if output_path:
@@ -166,6 +241,12 @@ async def test_agent_response(agent_config: AgentConfig, structured_schema, samp
         return {"error": "❌ No data returned"}
 
     df_clean = df.replace([np.inf, -np.inf], np.nan).fillna("null")
+
+    # ✅ Generate a single, comprehensive response
+    agent_response_content = generate_direct_response(question, df_clean)
+
+    tone_prefix = f"Hello! I'm {agent_name}, your {agent_config.role}.\nUsing a {agent_config.tone} tone:"
+    final_response = f"{tone_prefix}\n\n{agent_response_content}"
     insights, recs = generate_insights(df_clean)
 
     tone_prefix = f"Hello! I'm {agent_name}, your {agent_config.role}.\nUsing a {agent_config.tone} tone:"
@@ -175,7 +256,7 @@ async def test_agent_response(agent_config: AgentConfig, structured_schema, samp
         "top_rows": df_clean.head(10).to_dict(orient="records"),
         "insights": insights,
         "recommendations": recs,
-        "agent_response": f"{tone_prefix}\n\n{insights}\n\nRecommendations:\n{recs}"
+        "agent_response": final_response
     }
 
 
@@ -322,29 +403,30 @@ def load_agent_config(name: str) -> AgentConfig:
 
     return AgentConfig(**transformed)
 
-def _ensure_list(value):
-    if value is None:
-        return []
-    if isinstance(value, list):
-        return value
-    return [value]
+
 
 
 
 GET_ALL_AGENTS_URL = "https://supplysenseaiapi-aadngxggarc0g6hz.z01.azurefd.net/api/iSCM/GetAgentdetails"
 EDIT_AGENT_URL = "https://supplysenseaiapi-aadngxggarc0g6hz.z01.azurefd.net/api/iSCM/UpdateAgentDetails"
+# Ensure we correctly convert list to comma-separated string
+def list_to_str(value):
+    if isinstance(value, list):
+        return ", ".join(value)
+    return value or ""
 
 def edit_agent_config(existing_name, new_data):
     try:
-        # ✅ Extract values from new_data dictionary
         new_name = new_data.get("name")
         new_role = new_data.get("role")
         new_purpose = new_data.get("purpose")
+        new_instruction = new_data.get("instruction")
+        new_capabilities = new_data.get("capabilities")
 
         if not existing_name:
             return {"error": "Missing 'ExistingAgentName'"}
 
-        # 1. Get all agents
+        # Step 1: Fetch agents
         get_response = requests.get(GET_ALL_AGENTS_URL)
         if get_response.status_code != 200:
             return {"error": f"Failed to fetch agents. Status code: {get_response.status_code}"}
@@ -352,7 +434,7 @@ def edit_agent_config(existing_name, new_data):
         agents = get_response.json().get("Table", [])
         normalized_agents = [{k.lower(): v for k, v in agent.items()} for agent in agents]
 
-        # 2. Find agent by existing name
+        # Step 2: Find the existing agent
         matching_index = next(
             (i for i, agent in enumerate(normalized_agents)
              if agent.get("name", "").lower() == existing_name.lower()),
@@ -361,38 +443,51 @@ def edit_agent_config(existing_name, new_data):
         if matching_index is None:
             return {"error": f"Agent '{existing_name}' not found."}
 
-        # 3. Get original agent details for reference
         original_agent = agents[matching_index]
 
-        # 4. Build minimal payload for update API
-        payload = {
-            "ExistingAgentName": existing_name,
-            "NewAgentName": new_name or original_agent.get("Name", ""),
-            "ExistingRole": original_agent.get("Role", ""),
-            "NewRole": new_role or original_agent.get("Role", ""),
-            "ExistingPurpose": original_agent.get("Purpose", ""),
-            "NewPurpose": new_purpose or original_agent.get("Purpose", ""),
-            "Published": original_agent.get("Published", "False")  # Keep existing published state
-        }
+        # Step 3: Normalize old instruction/capabilities
+        existing_instruction = _ensure_list(original_agent.get("Instructions", ""))
+        existing_capabilities = _ensure_list(original_agent.get("Capabilities", ""))
 
-        # ✅ Log what we are sending
+        # Step 4: Normalize new instruction/capabilities
+        new_instruction = _ensure_list(new_instruction)
+        new_capabilities = _ensure_list(new_capabilities)
+
+        # Step 5: Build Payload
+        payload = {
+    "ExistingAgentName": existing_name,
+    "NewAgentName": new_name or original_agent.get("Name", ""),
+    "ExistingRole": original_agent.get("Role", ""),
+    "NewRole": new_role or original_agent.get("Role", ""),
+    "ExistingPurpose": original_agent.get("Purpose", ""),
+    "NewPurpose": new_purpose or original_agent.get("Purpose", ""),
+    "Published": original_agent.get("Published", "False"),
+
+      # Instruction
+    "ExistingInstruction": list_to_str(existing_instruction),
+    "Instruction": list_to_str(new_instruction) or list_to_str(existing_instruction),
+
+    # Capabilities
+    "Existingcapabilities": list_to_str(existing_capabilities),
+        "Capabilities": list_to_str(new_capabilities) or list_to_str(existing_capabilities)
+
+}
+
+
         print("\n📤 Final Payload to EDIT_AGENT_URL (minimal form):")
         print(json.dumps(payload, indent=2))
+        
 
-        # 5. Send POST request
         post_response = requests.post(EDIT_AGENT_URL, json=payload)
 
-        # ✅ Log the response
         print("📥 Status Code:", post_response.status_code)
         print("📥 Response Text:", post_response.text)
 
-        # 6. Handle success and parse response
         if post_response.status_code == 200 and post_response.text.strip().lower() != "internal server error":
             try:
-                response_json = post_response.json()
                 return {
                     "message": "✅ Agent updated successfully",
-                    "updated_config": response_json
+                    "updated_config": post_response.json()
                 }
             except Exception as e:
                 return {

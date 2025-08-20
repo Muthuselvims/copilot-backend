@@ -11,3 +11,4 @@ requests
 pydantic
 numpy
 python-docx
+matplotlib

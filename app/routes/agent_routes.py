@@ -53,10 +53,17 @@ async def agent_message(request: Request):
         thread.append({"user": message})
 
         # Collect agent data step-by-step
+        #if not collected["name"]:
+         #   collected["name"] = message
+          #  return JSONResponse({"message": "What is the agent's role?"})
         if not collected["name"]:
             collected["name"] = message
-            return JSONResponse({"message": "What is the agent's role?"})
-
+            return JSONResponse({
+             "message": "Choose role",
+            "Roles": VALID_ROLES
+         })
+        # Check if the role is valid
+        # If not, return an error message with valid options
         elif not collected["role"]:
             if message not in VALID_ROLES:
                 return JSONResponse({
@@ -215,7 +222,9 @@ async def edit_agent(request: Request):
         new_data = {
             "name": data.get("NewAgentName"),
             "role": data.get("NewRole"),
-            "purpose": data.get("NewPurpose")
+            "purpose": data.get("NewPurpose"),
+            "instruction" : data.get("Instruction"),
+            "capabilities" : data.get("Capabilities")
         }
 
         if not existing_name or not all(new_data.values()):
@@ -227,8 +236,7 @@ async def edit_agent(request: Request):
         # Now call your edit_agent_config with 2 arguments
         result = edit_agent_config(existing_name, new_data)
 
-        if isinstance(result, dict) and result.get("error"):
-            return JSONResponse(content=result, status_code=500)
+        if not isinstance(result, dict): result = {"message": str(result)}
 
         return JSONResponse(content={
             "message": "✅ Agent updated successfully via API",
@@ -295,7 +303,8 @@ async def test_existing_agent(request: Request):
         # Only test for insights and recommendations
         result = await test_agent_response(agent_config.dict(), structured_schema, sample_data, question)
 
-    return JSONResponse(result)
+    return JSONResponse(serialize(result))
+
 
 
 
