@@ -286,6 +286,10 @@ def publish_agent (agent_name):
             "NewRole": original_agent.get("Role", ""),
             "ExistingPurpose": original_agent.get("Purpose", ""),
             "NewPurpose": original_agent.get("Purpose", ""),
+            "ExistingInstruction": original_agent.get("Instructions", ""),
+            "Instruction": original_agent.get("Instructions", ""),
+            "Existingcapabilities": original_agent.get("Capabilities", ""),
+            "Capabilities": original_agent.get("Capabilities", ""),
             "Published": "True"  # ✅ Set Published to True
         }
 
